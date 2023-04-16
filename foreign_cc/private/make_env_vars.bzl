@@ -10,7 +10,8 @@ def get_make_env_vars(
         flags,
         user_vars,
         deps,
-        inputs):
+        inputs,
+        ctx_actions):
     vars = _get_make_variables(workspace_name, tools, flags, user_vars)
     deps_flags = _define_deps_flags(deps, inputs)
 
@@ -27,8 +28,19 @@ def get_make_env_vars(
     # https://www.gnu.org/software/autoconf/manual/autoconf-2.63/html_node/Preset-Output-Variables.html
     vars["CPPFLAGS"] = deps_flags.flags
 
+    files = []
+    for flag in _MAKE_FLAGS:
+        if flag in vars:
+            f = ctx_actions.declare_file("{}.flags".format(flag))
+            ctx_actions.write(
+                output = f,
+                content = " ".join(["'{}'".format(f) for f in vars[flag]]),
+            )
+            files.append(f)
+            vars[flag] = ["@$$EXT_BUILD_ROOT$$/{}".format(f.path)]
+
     return " ".join(["{}=\"{}\""
-        .format(key, _join_flags_list(workspace_name, vars[key])) for key in vars])
+        .format(key, _join_flags_list(workspace_name, vars[key])) for key in vars]), files
 
 def _define_deps_flags(deps, inputs):
     # It is very important to keep the order for the linker => put them into list

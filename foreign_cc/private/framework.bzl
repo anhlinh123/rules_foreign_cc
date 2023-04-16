@@ -275,6 +275,14 @@ dependencies.""",
     ),
 )
 
+ConfigureScript = provider(
+    doc = """Configure script""",
+    fields = dict(
+        content = "script content",
+        files = "files required to execute script",
+    ),
+)
+
 def _is_msvc_var(var):
     return var == "INCLUDE" or var == "LIB"
 
@@ -424,6 +432,8 @@ def cc_external_rule_impl(ctx, attrs):
     if not attrs.postfix_script:
         postfix_script = []
 
+    configure_script = attrs.create_configure_script(ConfigureParameters(ctx = ctx, attrs = attrs, inputs = inputs))
+
     script_lines = [
         "##echo## \"\"",
         "##echo## \"{}\"".format(lib_header),
@@ -438,7 +448,7 @@ def cc_external_rule_impl(ctx, attrs):
         "##mkdirs## $$EXT_BUILD_DEPS$$",
     ] + _print_env() + _copy_deps_and_tools(inputs) + [
         "cd $$BUILD_TMPDIR$$",
-    ] + attrs.create_configure_script(ConfigureParameters(ctx = ctx, attrs = attrs, inputs = inputs)) + postfix_script + [
+    ] + configure_script.content + postfix_script + [
         # replace references to the root directory when building ($BUILD_TMPDIR)
         # and the root where the dependencies were installed ($EXT_BUILD_DEPS)
         # for the results which are in $INSTALLDIR (with placeholder)
@@ -491,6 +501,7 @@ def cc_external_rule_impl(ctx, attrs):
         outputs = rule_outputs + [wrapped_outputs.log_file],
         tools =
             [wrapped_outputs.script_file, wrapped_outputs.wrapper_script_file] +
+            configure_script.files +
             ctx.files.data +
             ctx.files.build_data +
             legacy_tools +
