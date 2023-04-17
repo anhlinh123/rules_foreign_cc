@@ -76,11 +76,11 @@ def _make_tool_impl(ctx):
 
         env.update({
             "AR": absolute_ar,
-            "ARFLAGS": _join_flags_list(ctx.workspace_name, arflags),
+            "ARFLAGS": _flags_as_file(ctx.workspace_name, arflags, "ARFLAGS.txt"),
             "CC": absolute_cc,
-            "CFLAGS": _join_flags_list(ctx.workspace_name, non_sysroot_cflags),
+            "CFLAGS": _flags_as_file(ctx.workspace_name, non_sysroot_cflags, "CFLAGS.txt"),
             "LD": absolute_ld,
-            "LDFLAGS": _join_flags_list(ctx.workspace_name, non_sysroot_ldflags),
+            "LDFLAGS": _flags_as_file(ctx.workspace_name, non_sysroot_ldflags, "LDFLAGS.txt"),
         })
 
         configure_env = " ".join(["%s=\"%s\"" % (key, value) for key, value in env.items()])
@@ -110,6 +110,11 @@ make_tool = rule(
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
 )
+
+def _flags_as_file(workspace_name, flags, filename):
+    flaglist = [absolutize(workspace_name, f) for f in flags]
+    flagstr = " ".join(["\\''{}'\\'".format(f) if "$$" not in f else f for f in flaglist])
+    return "@$(echo {flagstr} > {filename}; echo {filename})".format(flagstr = flagstr, filename = filename)
 
 def _join_flags_list(workspace_name, flags):
     return " ".join([absolutize(workspace_name, flag) for flag in flags])
