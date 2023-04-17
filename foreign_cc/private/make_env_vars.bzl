@@ -29,7 +29,8 @@ def get_make_env_vars(
 
     for flag in _MAKE_FLAGS:
         if flag in vars:
-            flagstr = " ".join(["\\''{}'\\'".format(_absolutize(workspace_name, f)) for f in vars[flag]])
+            flaglist = [_absolutize(workspace_name, f) for f in vars[flag]]
+            flagstr = " ".join(["\\''{}'\\'".format(f) if "$$" not in f else f for f in flaglist])
             vars[flag] = ["@$(echo {flagstr} > {flag}.txt; echo {flag}.txt)".format(flagstr = flagstr, flag = flag)]
 
     return " ".join(["{}=\"{}\""
