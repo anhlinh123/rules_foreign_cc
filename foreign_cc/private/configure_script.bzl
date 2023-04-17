@@ -24,8 +24,7 @@ def create_configure_script(
         autogen_command,
         autogen_options,
         make_path,
-        make_commands,
-        ctx_actions):
+        make_commands):
     ext_build_dirs = inputs.ext_build_dirs
 
     script = pkgconfig_script(ext_build_dirs)
@@ -69,10 +68,9 @@ def create_configure_script(
             options = " ".join(autoreconf_options),
         ).lstrip())
 
-    make_env_vars, files = get_make_env_vars(workspace_name, tools, flags, env_vars, deps, inputs, ctx_actions)
     script.append("##mkdirs## $$BUILD_TMPDIR$$/$$INSTALL_PREFIX$$")
     script.append("{env_vars} {prefix}\"{configure}\" {prefix_flag}$$BUILD_TMPDIR$$/$$INSTALL_PREFIX$$ {user_options}".format(
-        env_vars = make_env_vars,
+        env_vars = get_make_env_vars(workspace_name, tools, flags, env_vars, deps, inputs),
         prefix = configure_prefix,
         configure = configure_path,
         prefix_flag = prefix_flag,
@@ -82,7 +80,7 @@ def create_configure_script(
     script.extend(make_commands)
     script.append("##disable_tracing##")
 
-    return script, files
+    return script
 
 def _get_autogen_env_vars(autogen_env_vars):
     # Make a copy if necessary so we can set NOCONFIGURE.

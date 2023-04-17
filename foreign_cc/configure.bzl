@@ -13,7 +13,6 @@ load(
     "//foreign_cc/private:framework.bzl",
     "CC_EXTERNAL_RULE_ATTRIBUTES",
     "CC_EXTERNAL_RULE_FRAGMENTS",
-    "ConfigureScript",
     "cc_external_rule_impl",
     "create_attrs",
     "expand_locations_and_make_variables",
@@ -87,7 +86,7 @@ def _create_configure_script(configureParameters):
             target = target,
         ))
 
-    configure, files = create_configure_script(
+    configure = create_configure_script(
         workspace_name = ctx.workspace_name,
         tools = tools,
         flags = flags,
@@ -109,9 +108,8 @@ def _create_configure_script(configureParameters):
         autogen_options = ctx.attr.autogen_options,
         make_commands = make_commands,
         make_path = attrs.make_path,
-        ctx_actions = ctx.actions,
     )
-    return ConfigureScript(content = define_install_prefix + configure, files = files)
+    return define_install_prefix + configure
 
 def _get_install_prefix(ctx):
     if ctx.attr.install_prefix:
